@@ -19,7 +19,7 @@ const makeGetRequest = (url, callback) => {
       callback(result);
     });
   }).on("error", (err) => {
-    console.log("Error: " + err.message);
+    console.error("Error: " + err.message);
   });
 };
 

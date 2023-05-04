@@ -35,7 +35,6 @@ http.createServer((req, res) => {
       const fileList = files.map(file => `<li><a href="/news/${file}">${file}</a></li>`).join('\n');
       const preparedPage = pageTemplate.replace('{news_list}', fileList);
 
-      res.setHeader('Content-type', 'text/html');
       res.end(preparedPage);
     });
   } else if (url !== '/favicon.ico') {

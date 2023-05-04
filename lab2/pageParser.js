@@ -18,11 +18,7 @@ const parseNewsPage = (data) => {
       const link = attribs.href;
 
       if (/^\/node/.test(link)) {
-        const existingNews = news.find((el) => el.link === link);
-
-        if (!existingNews) {
-          news.push({title, link});
-        }
+        news.push({title, link});
       }
     }
   }

@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+    <div class="container pt-5">
+        <h1>Tickets from Love</h1>
+        <h2>Guest page</h2>
+
+        <div class="contents row pt-3">
+            <% for (const session of movieSessions) { %>
+                <div class="col-xl-4 col-md-5 card m-2">
+                    <div class="card-body">
+                        <h5 class="card-title"><%= session.title %></h5>
+                        <p class="card-text"><%= session.description %></p>
+                        <a class="btn btn-primary" href="/guest/book?sessionId=<%= session.id %>">
+                            Book a ticket
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+<%- include('partials/footer') %>

@@ -6,7 +6,7 @@ const path = require("path");
 const {retrieveAndSaveInformation} = require('./webScrapper.js');
 
 const PORT = 8000;
-const pageTemplate = fs.readFileSync('template.html').toString('utf8');
+const pageTemplate = fs.readFileSync('template.html', {encoding: 'utf8'});
 
 setInterval(retrieveAndSaveInformation, 60_000);
 

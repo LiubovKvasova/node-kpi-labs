@@ -1,0 +1,305 @@
+<%- include('partials/header') %>
+    <div class="container pt-5">
+        <h1>Tickets from Love</h1>
+        <h2>Admin page</h2>
+
+        <div class="text-center pt-3">
+            <div class="row justify-content-center">
+                <div class="col">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSession">
+                        Create session
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Title</th>
+                            <th scope="col">Description</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <% for (const session of movieSessions) { %>
+                        <tr>
+                            <th scope="row">
+                                <%= session.title %>
+                            </th>
+                            <td>
+                                <%= session.description %>
+                            </td>
+                            <td>
+                                <button class="btn btn-primary open-create-ticket"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#createPlacement"
+                                    data-session-id="<%= session.id %>">
+                                    Create ticket
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-warning open-update-session"
+                                data-bs-toggle="modal"
+                                data-bs-target="#updateSession"
+                                data-session-id="<%= session.id %>">
+                                    Update
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-danger open-delete-session"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteSession"
+                                data-session-id="<%= session.id %>">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        <% } %>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal fade" id="createSession" tabindex="-1" aria-labelledby="createSessionLabel"
+            aria-hidden="true">
+            <div class="modal-dialog create-session">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createSessionLabel">Create session</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control m-2" placeholder="Title" aria-label="Title" name="title">
+                        <input type="text" class="form-control m-2" placeholder="Description" aria-label="Description"
+                            name="description">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary create-session-trigger">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="createPlacement" tabindex="-1" aria-labelledby="createPlacementLabel"
+            aria-hidden="true">
+            <div class="modal-dialog create-placement">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createPlacementLabel">Create ticket</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input hidden type="text" name="sessionId" />
+                        <input type="text" class="form-control m-2" placeholder="Row" aria-label="Row" name="row">
+                        <input type="text" class="form-control m-2" placeholder="Seat" aria-label="Seat" name="seat">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary create-placement-trigger">Create</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="updateSession" tabindex="-1" aria-labelledby="updateSessionLabel"
+            aria-hidden="true">
+            <div class="modal-dialog update-session">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="updateSessionLabel">Update session</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input hidden type="text" name="sessionId" />
+                        <input type="text" class="form-control m-2" placeholder="Title" aria-label="Title" name="title">
+                        <input type="text" class="form-control m-2" placeholder="Description" aria-label="Description"
+                            name="description">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary update-session-trigger">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="deleteSession" tabindex="-1" aria-labelledby="deleteSessionLabel"
+            aria-hidden="true">
+            <div class="modal-dialog delete-session">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="deleteSessionLabel">Delete session</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input hidden type="text" name="sessionId" />
+                        <p>Are you sure?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger delete-session-trigger">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script defer>
+        // My only Love
+        // This is about my wife. Session will be on 24th of May, 2023, at 15:00
+
+        document.querySelector('.create-session-trigger')
+            .addEventListener('click', () => {
+                const titleField = document.querySelector('.create-session [name=title]');
+                const descriptionField = document.querySelector('.create-session [name=description]');
+
+                const title = titleField.value;
+                const description = descriptionField.value;
+
+                fetch('/api/v1/session/add', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({ title, description })
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.error) {
+                            alert(data.message);
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+
+                console.log({ title, description });
+            });
+
+        document.querySelector('.create-placement-trigger')
+            .addEventListener('click', () => {
+                const sessionIdField = document.querySelector('.create-placement [name=sessionId]');
+                const rowField = document.querySelector('.create-placement [name=row]');
+                const seatField = document.querySelector('.create-placement [name=seat]');
+
+                const sessionId = sessionIdField.value;
+                const row = rowField.value;
+                const seat = seatField.value;
+
+                fetch('/api/v1/placement/add', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'POST',
+                    body: JSON.stringify({ sessionId, row, seat })
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.added) {
+                            window.location.reload();
+                        } else {
+                            alert('Duplicate ticket!');
+                        }
+                    });
+            });
+
+        document.querySelector('.update-session-trigger')
+            .addEventListener('click', () => {
+                const sessionIdField = document.querySelector('.update-session [name=sessionId]');
+                const titleField = document.querySelector('.update-session [name=title]');
+                const descriptionField = document.querySelector('.update-session [name=description]');
+
+                const sessionId = sessionIdField.value;
+                const title = titleField.value;
+                const description = descriptionField.value;
+
+                fetch('/api/v1/session', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'PUT',
+                    body: JSON.stringify({ sessionId, title, description })
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.added) {
+                            alert(data.message);
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+            });
+
+        document.querySelector('.delete-session-trigger')
+            .addEventListener('click', () => {
+                const sessionIdField = document.querySelector('.delete-session [name=sessionId]');
+                const sessionId = sessionIdField.value;
+
+                fetch('/api/v1/session', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    method: 'DELETE',
+                    body: JSON.stringify({ sessionId })
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.added) {
+                            alert(data.message);
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+            });
+
+        const updateButtons = document.querySelectorAll('.open-update-session');
+        for (const button of updateButtons) {
+            button.addEventListener('click', (event) => {
+                const sessionId = event.target.getAttribute('data-session-id');
+
+                const sessionIdField = document.querySelector('.update-session [name=sessionId]');
+                const titleField = document.querySelector('.update-session [name=title]');
+                const descriptionField = document.querySelector('.update-session [name=description]');
+
+                sessionIdField.value = sessionId;
+
+                // Clear input fields
+                titleField.value = '';
+                descriptionField.value = '';
+            });
+        }
+
+        const createTicketButtons = document.querySelectorAll('.open-create-ticket');
+        for (const button of createTicketButtons) {
+            button.addEventListener('click', (event) => {
+                const sessionId = event.target.getAttribute('data-session-id');
+
+                const sessionIdField = document.querySelector('.create-placement [name=sessionId]');
+                const rowField = document.querySelector('.create-placement [name=row]');
+                const seatField = document.querySelector('.create-placement [name=seat]');
+
+                sessionIdField.value = sessionId;
+
+                // Clear input fields
+                rowField.value = '';
+                seatField.value = '';
+            });
+        }
+
+        const deleteSessionButtons = document.querySelectorAll('.open-delete-session');
+        for (const button of deleteSessionButtons) {
+            button.addEventListener('click', (event) => {
+                const sessionId = event.target.getAttribute('data-session-id');
+                const sessionIdField = document.querySelector('.delete-session [name=sessionId]');
+                sessionIdField.value = sessionId;
+            });
+        }
+
+
+    </script>
+<%- include('partials/footer') %>

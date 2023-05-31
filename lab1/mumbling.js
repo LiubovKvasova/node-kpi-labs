@@ -16,3 +16,16 @@ function accum(s) {
 
   return result;
 }
+
+console.log(accum('Hello'));
+
+function hello (){
+  const word = 'Hello';
+  function write () {
+    console.log(word);
+  }
+  return write;
+}
+
+const write = hello();
+write();

@@ -1,11 +1,22 @@
 import BaseUser from './BaseUser.js';
 
 export default class Guest extends BaseUser {
-    constructor () {
+    constructor() {
         super();
     }
 
-    bookPlacement (session, placementId) {
-        return session.bookPlacement(placementId);
+    bookPlacement(collection, sessionId, placementId) {
+        const filter = {
+            _id: new ObjectId(sessionId)
+        };
+        const updateAction = {
+            $pull: {
+                availablePlacements: {
+                    _id: new ObjectId(placementId)
+                }
+            }
+        };
+
+        return collection.findOneAndUpdate(filter, updateAction);
     }
 }

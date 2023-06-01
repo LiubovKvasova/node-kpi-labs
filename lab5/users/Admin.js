@@ -1,25 +1,61 @@
+import { ObjectId } from 'mongodb';
 import BaseUser from './BaseUser.js';
-import MovieSession from '../models/MovieSession.js';
 
 export default class Admin extends BaseUser {
-    constructor () {
+    constructor() {
         const rootPermissions = true;
         super(rootPermissions);
     }
 
-    createSession (title, description) {
-        return new MovieSession(title, description);
+    createSession(collection, title, description) {
+        const newSession = {
+            title,
+            description,
+            availablePlacements: []
+        };
+        return collection.insertOne(newSession);
     }
 
-    addPlacement (session, row, seat) {
-        return session.addPlacement(row, seat);
+    addPlacement(collection, sessionId, row, seat) {
+        const filter = {
+            _id: new ObjectId(sessionId)
+        };
+        const updateAction = {
+            $push: {
+                availablePlacements: {
+                    row,
+                    seat,
+                    _id: new ObjectId()
+                }
+            }
+        };
+
+        return collection.findOneAndUpdate(filter, updateAction);
     }
 
-    updateInfo (session, info) {
-        session.updateInfo(info);
+    updateInfo(collection, sessionId, info) {
+        const filter = {
+            _id: new ObjectId(sessionId)
+        };
+        const updateAction = {
+            $set: info
+        };
+
+        return collection.findOneAndUpdate(filter, updateAction);
     }
 
-    deletePlacement (session, placementId) {
-        session.deletePlacement(placementId);
+    deletePlacement(collection, sessionId, placementId) {
+        const filter = {
+            _id: new ObjectId(sessionId)
+        };
+        const updateAction = {
+            $pull: {
+                availablePlacements: {
+                    _id: new ObjectId(placementId)
+                }
+            }
+        };
+
+        return collection.findOneAndUpdate(filter, updateAction);
     }
 }

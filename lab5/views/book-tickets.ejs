@@ -5,22 +5,22 @@
         <h3>Description: <%= session.description %></h3>
 
         <div class="contents row pt-3">
-            <% if (placements.length === 0) { %>
+            <% if (!placements || placements.length === 0) { %>
                 <p>There are no available tickets.</p>
-            <% } %>
-
-            <% for (const placement of placements) { %>
-                <div class="col-xl-2 col-md-3 card m-2">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            Row <%= placement.row %>, seat <%= placement.seat %>
-                        </h5>
-                        <a class="btn btn-primary book-ticket" data-placement-id="<%= placement.id %>"
-                            data-session-id="<%= session.id %>">
-                            Book
-                        </a>
-                    </div>
-                </div>
+            <% } else { %>
+              <% for (const placement of placements) { %>
+                  <div class="col-xl-2 col-md-3 card m-2">
+                      <div class="card-body">
+                          <h5 class="card-title">
+                              Row <%= placement.row %>, seat <%= placement.seat %>
+                          </h5>
+                          <a class="btn btn-primary book-ticket" data-placement-id="<%= placement._id %>"
+                              data-session-id="<%= session._id %>">
+                              Book
+                          </a>
+                      </div>
+                  </div>
+              <% } %>
             <% } %>
         </div>
     </div>

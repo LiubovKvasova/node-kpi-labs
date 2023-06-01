@@ -1,5 +1,6 @@
 import express from 'express';
 import routes from './routes.js';
+import databaseClient from './databaseClient.js';
 
 const app = express();
 const PORT = 8800;
@@ -9,7 +10,11 @@ app.set('view engine', 'ejs');
 app.use('/', routes);
 
 const server = app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+    databaseClient.connect().then(() => {
+        console.log(`Server listening on port ${PORT}`);
+    }).catch((error) => {
+        console.error(error);
+    });
 });
 
 // On interrupt signal (for example, Ctrl+C)
@@ -18,10 +23,14 @@ process.on('SIGINT', () => {
 
     server.close((error) => {
         if (error) {
-            throw error;
+            console.error(error);
         }
 
-        console.log('Closed successfully.');
-        process.exitCode = 0;
+        databaseClient.close().then(() => {
+            console.log('Closed successfully.');
+            process.exitCode = 0;
+        }).catch((error) => {
+            console.error(error);
+        });
     });
 });

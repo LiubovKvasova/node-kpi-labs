@@ -1,7 +1,10 @@
 import Admin from './users/Admin.js';
 import Guest from './users/Guest.js';
+import databaseClient from './databaseClient.js';
+import { ObjectId } from 'mongodb';
 
-const movieSessions = [];
+const database = databaseClient.db("movieDatabase");
+const movieSessions = database.collection("sessions");
 
 const guest = new Guest();
 const admin = new Admin();
@@ -21,16 +24,18 @@ export const mainPage = (req, res) => {
 
 export const guestPage = (req, res) => {
     const currentPage = 'guest';
-    const viewData = { currentPage, movieSessions };
-
-    res.render(currentPage, viewData);
+    movieSessions.find({}).toArray().then((result) => {
+        const viewData = { currentPage, movieSessions: result };
+        res.render(currentPage, viewData);
+    });
 };
 
 export const adminPage = (req, res) => {
     const currentPage = 'admin';
-    const viewData = { currentPage, movieSessions };
-
-    res.render(currentPage, viewData);
+    movieSessions.find({}).toArray().then((result) => {
+        const viewData = { currentPage, movieSessions: result };
+        res.render(currentPage, viewData);
+    });
 };
 
 export const bookTicketPage = (req, res) => {
@@ -38,28 +43,32 @@ export const bookTicketPage = (req, res) => {
     const viewData = { currentPage };
 
     const {sessionId} = req.query;
+    const session = movieSessions.findOne({_id: new ObjectId(sessionId)});
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    viewData.session = session;
+    session.then((result) => {
+        console.log(result);
+        viewData.session = result;
 
-    if (session) {
-        viewData.placements = session.getPlacements();
-    }
+        if (result) {
+            viewData.placements = result.availablePlacements;
+        }
 
-    res.render(currentPage, viewData);
+        res.render(currentPage, viewData);
+    });
 }
 
 // REST API endpoints
 
 export const addSession = (req, res) => {
     const {title, description} = req.body;
-    const session = admin.createSession(title, description);
-    movieSessions.push(session);
+    const session = admin.createSession(movieSessions, title, description);
 
-    res.status(201);
-    res.send({
-        error: false,
-        status: 'ok'
+    session.then(() => {
+      res.status(201);
+      res.send({
+          error: false,
+          status: 'ok'
+      });
     });
 };
 
@@ -75,39 +84,39 @@ export const addPlacement = (req, res) => {
         return;
     }
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    admin.addPlacement(movieSessions, sessionId, parseInt(row), parseInt(seat)).then((result) => {
+        console.log(result);
+        if (result.lastErrorObject.n === 0) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    const added = admin.addPlacement(session, parseInt(row), parseInt(seat));
-    res.status(201);
-    res.send({ added });
+        res.status(201);
+        res.send({ added: result.lastErrorObject.updatedExisting });
+    });
 };
 
 export const getSessions = (req, res) => {
-    // Pagination part
     const {page, itemsPerPage, title, description} = req.query;
-    let results = [];
-
-    let matchedSessions = movieSessions;
+    const filter = {};
 
     if (title) {
-        matchedSessions = matchedSessions
-            .filter((session) => session.title === title);
+        filter.title = title;
     }
 
     if (description) {
-        matchedSessions = matchedSessions
-            .filter((session) => session.description === description);
+        filter.description = description;
     }
 
-    if (page && itemsPerPage) {
+    if (Object.keys(filter).length > 0) {
+        movieSessions.find(filter).toArray().then((result) => {
+            res.send(result);
+        });
+    } else if (page && itemsPerPage) {
         if (!isInteger(page) || !isInteger(itemsPerPage)) {
             res.status(400);
             res.send({
@@ -120,137 +129,139 @@ export const getSessions = (req, res) => {
         const pageNumber = parseInt(page);
         const itemsPerPageNumber = parseInt(itemsPerPage);
 
-        const lastIndex = pageNumber * itemsPerPageNumber;
-        const firstIndex = lastIndex - itemsPerPageNumber;
+        movieSessions.find({})
+            .skip((pageNumber - 1) * itemsPerPageNumber)
+            .limit(itemsPerPageNumber)
+            .toArray()
+            .then((result) => {
+                movieSessions.countDocuments({}).then((documentAmount) => {
+                    if (result.length === 0 && documentAmount !== 0) {
+                        res.status(400);
+                        res.send({
+                            error: true,
+                            message: 'Parameters are out of bounds'
+                        });
+                        return;
+                    }
 
-        for (let i = firstIndex; i < lastIndex; i++) {
-            const movie = matchedSessions[i];
-
-            if (movie) {
-                results.push(movie);
-            }
-        }
-
-        if (results.length === 0 && matchedSessions.length !== 0) {
-            res.status(400);
-            res.send({
-                error: true,
-                message: 'Parameters are out of bounds'
+                    res.send(result);
+                })
             });
-            return;
-        }
     } else {
-        results = matchedSessions;
+        movieSessions.find({}).toArray().then((result) => {
+            res.send(result);
+        });
     }
-
-    res.send(results);
 };
 
 export const getOneSession = (req, res) => {
     const {id} = req.params;
-    const session = movieSessions.find((session) => session.id === id);
+    const session = movieSessions.findOne({_id: new ObjectId(id)});
 
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    session.then((result) => {
+        if (!result) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    res.send(session);
+        res.send(result);
+    });
 };
 
 export const getPlacements = (req, res) => {
     const {sessionId} = req.query;
+    const session = movieSessions.findOne({_id: new ObjectId(sessionId)});
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    session.then((result) => {
+        if (!result) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    const placements = session.getPlacements();
-    res.send({ session, placements });
+        const {availablePlacements, ...sessionInfo} = result;
+        res.send({ session: sessionInfo, placements: availablePlacements });
+    });
 };
 
 export const bookPlacement = (req, res) => {
     const {sessionId, placementId} = req.body;
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    const removed = admin.deletePlacement(movieSessions, sessionId, placementId).then((result) => {
+        if (result.lastErrorObject.n === 0) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    const removed = guest.bookPlacement(session, placementId);
-    res.send({ removed });
+        res.send({ removed: result.lastErrorObject.updatedExisting });
+    });
 };
 
 export const updateSession = (req, res) => {
     const {sessionId, title, description} = req.body;
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    admin.updateInfo(movieSessions, sessionId, {title, description}).then((result) => {
+        if (result.lastErrorObject.n === 0) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    admin.updateInfo(session, {title, description});
-    res.send({
-        error: false,
-        status: 'ok'
+        res.send({
+            error: false,
+            status: 'ok'
+        });
     });
 };
 
 export const deleteSession = (req, res) => {
     const { sessionId } = req.body;
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
+    const session = movieSessions.deleteOne({_id: new ObjectId(sessionId)});
+    session.then((result) => {
+        if (result.deletedCount === 0) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
+
         res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
+            error: false,
+            status: 'ok'
         });
-        return;
-    }
-
-    const sessionIndex = movieSessions.indexOf(session);
-    movieSessions.splice(sessionIndex, 1);
-
-    res.send({
-        error: false,
-        status: 'ok'
-    });
+    });    
 };
 
 export const deletePlacement = (req, res) => {
     const {sessionId, placementId} = req.body;
 
-    const session = movieSessions.find(({id}) => id === sessionId);
-    if (!session) {
-        res.status(404);
-        res.send({
-            error: true,
-            message: 'No session with mentioned id was found'
-        });
-        return;
-    }
+    const removed = admin.deletePlacement(movieSessions, sessionId, placementId).then((result) => {
+        if (result.lastErrorObject.n === 0) {
+            res.status(404);
+            res.send({
+                error: true,
+                message: 'No session with mentioned id was found'
+            });
+            return;
+        }
 
-    const removed = admin.deletePlacement(session, placementId);
-    res.send({ removed });
+        res.send({ removed: result.lastErrorObject.updatedExisting });
+    });
 };
